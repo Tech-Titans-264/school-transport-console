@@ -46,11 +46,6 @@ School-Transport-Safety-Console/
 
 The project structure may vary depending on the final implementation.
 
-⚙️ How to Run
-Clone the repository:
-git clone https://github.com/your-username/school-transport-safety-console.git
-
-
 Open the project folder.
 
 Open index.html in your web browser.

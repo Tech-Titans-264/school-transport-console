@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Notifications — Transport Safety Console</title>
+<link rel="stylesheet" href="css/style.css" />
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <div id="navbar-container"></div>
+
+  <div class="page">
+    <div class="page-title">Notifications</div>
+    <div class="page-subtitle">Bus, boarding aur emergency ke saare updates yahan dikhenge</div>
+
+    <div class="card" style="padding:0;">
+      <div id="notifList"></div>
+    </div>
+  </div>
+
+  <script src="js/script.js"></script>
+  <script>
+    renderNavbar("notifications.html");
+
+    // Default demo notifications + any real emergency triggered from emergency.html
+    let defaultNotifs = [
+      { type: "success", text: "Aarav boarded Bus UP32-AB-1234 at Stop 1 - Sector 12.", time: "8 min ago" },
+      { type: "info", text: "Bus UP32-CD-5678 started its route towards Hazratganj.", time: "22 min ago" },
+      { type: "info", text: "Bus UP32-EF-9012 is currently idle at the depot.", time: "1 hr ago" },
+    ];
+
+    let savedNotifs = JSON.parse(localStorage.getItem("stsc_notifs") || "[]");
+    let allNotifs = [...savedNotifs, ...defaultNotifs];
+
+    const list = document.getElementById("notifList");
+    allNotifs.forEach(n => {
+      const item = document.createElement("div");
+      item.className = "notif-item";
+      item.innerHTML = `
+        <div class="notif-dot ${n.type}"></div>
+        <div>
+          <div>${n.text}</div>
+          <div class="notif-time">${n.time}</div>
+        </div>
+      `;
+      list.appendChild(item);
+    });
+  </script>
+</body>
+</html>

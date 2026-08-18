@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Boarding — Transport Safety Console</title>
+<link rel="stylesheet" href="css/style.css" />
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <div id="navbar-container"></div>
+
+  <div class="page">
+    <div class="page-title">Student Boarding</div>
+    <div class="page-subtitle">Har student ke aage tap karke boarded/not-boarded mark karo</div>
+
+    <div class="card" style="margin-bottom:20px; display:flex; justify-content:space-between; align-items:center;">
+      <div>
+        <strong id="boardedCount">0</strong> / <span id="totalCount">0</span> students boarded
+      </div>
+      <div style="color:#6B7686; font-size:0.85rem;">Bus: UP32-AB-1234 · Route 1</div>
+    </div>
+
+    <div class="card" style="padding:0;">
+      <div id="studentList"></div>
+    </div>
+  </div>
+
+  <script src="js/script.js"></script>
+  <script>
+    renderNavbar("boarding.html");
+
+    let students = JSON.parse(JSON.stringify(STUDENTS)); // local copy
+
+    function renderStudents() {
+      const list = document.getElementById("studentList");
+      list.innerHTML = "";
+
+      students.forEach((s, i) => {
+        const row = document.createElement("div");
+        row.className = "student-row";
+        row.innerHTML = `
+          <div>
+            <div style="font-weight:600;">${s.name}</div>
+            <div style="font-size:0.8rem; color:#6B7686;">${s.stop}</div>
+          </div>
+          <button class="toggle-btn ${s.boarded ? 'boarded' : 'not-boarded'}" onclick="toggleBoarded(${i})">
+            ${s.boarded ? "✓ Boarded" : "Not boarded"}
+          </button>
+        `;
+        list.appendChild(row);
+      });
+
+      document.getElementById("boardedCount").textContent = students.filter(s => s.boarded).length;
+      document.getElementById("totalCount").textContent = students.length;
+    }
+
+    function toggleBoarded(index) {
+      students[index].boarded = !students[index].boarded;
+      renderStudents();
+    }
+
+    renderStudents();
+  </script>
+</body>
+</html>

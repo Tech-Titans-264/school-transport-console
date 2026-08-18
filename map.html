@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Live Map — Transport Safety Console</title>
+<link rel="stylesheet" href="css/style.css" />
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<!-- Leaflet.js - free map library, no API key needed -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+</head>
+<body>
+
+  <div id="navbar-container"></div>
+
+  <div class="page">
+    <div class="page-title">Live Map</div>
+    <div class="page-subtitle">
+      GPS/AIS-140 integration se buses ki real-time location
+      <span class="live-tag" style="margin-left:8px;"><span class="dot"></span> LIVE (simulated)</span>
+    </div>
+
+    <div id="gpsStatus" class="card" style="margin-bottom:16px; font-size:0.85rem; font-weight:600; padding:12px 18px;">
+      📡 Requesting real GPS permission from your browser...
+    </div>
+
+    <div id="map"></div>
+  </div>
+
+  <script src="js/script.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    renderNavbar("map.html");
+
+    // Har bus ka ek chhota "route path" — real project mein ye actual GPS device se aayega.
+    // Yahan hum har 2 second mein bus ko path ke agle point pe move karke "live tracking" simulate kar rahe hain.
+    const routePaths = {
+      "UP32-AB-1234": [
+        [26.8467, 80.9462], [26.8490, 80.9420], [26.8520, 80.9380],
+        [26.8555, 80.9340], [26.8590, 80.9300], [26.8600, 80.9200],
+      ],
+      "UP32-CD-5678": [
+        [26.8600, 80.9200], [26.8560, 80.9250], [26.8520, 80.9300],
+        [26.8480, 80.9350], [26.8467, 80.9462],
+      ],
+      "UP32-EF-9012": [
+        [26.8100, 80.9100], [26.8150, 80.9150], [26.8200, 80.9200], [26.8250, 80.9250],
+      ],
+      "UP32-GH-3456": [
+        [26.8800, 80.9700], [26.8750, 80.9650], [26.8700, 80.9600], [26.8650, 80.9550],
+      ],
+    };
+
+    const map = L.map('map').setView([26.8467, 80.9462], 12);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    const colorFor = status => status === "emergency" ? "#E23E3E" : status === "running" ? "#2FA679" : "#6B7686";
+
+    function makeIcon(status) {
+      return L.divIcon({
+        html: `<div style="background:${colorFor(status)}; width:16px; height:16px; border-radius:50%; border:3px solid white; box-shadow:0 2px 6px rgba(0,0,0,0.35);"></div>`,
+        className: '',
+        iconSize: [16, 16],
+      });
+    }
+
+    // Ek marker banao har bus ke liye, aur track karo wo path mein kahan hai
+    const markers = BUSES.map(bus => {
+      const path = routePaths[bus.id] || [[26.8467, 80.9462]];
+      const marker = L.marker(path[0], { icon: makeIcon(bus.status) })
+        .addTo(map)
+        .bindPopup(`<strong>${bus.id}</strong><br>${bus.route}<br>Driver: ${bus.driver}<br>Status: ${bus.status}`);
+
+      // Route line bhi dikha dete hain (dashed, jaisa asli route planner mein hota hai)
+      if (bus.status !== "idle") {
+        L.polyline(path, { color: colorFor(bus.status), weight: 2, dashArray: "6,8", opacity: 0.5 }).addTo(map);
+      }
+
+      return { bus, marker, path, step: 0 };
+    });
+
+    // Har 2 second mein har bus ko apne path ke next point pe move karo (loop karta rahega)
+    setInterval(() => {
+      markers.forEach(m => {
+        if (m.bus.status === "idle") return; // idle buses nahi hilti
+        m.step = (m.step + 1) % m.path.length;
+        m.marker.setLatLng(m.path[m.step]);
+      });
+    }, 2000);
+
+    // ---- REAL GPS TRACKING (asli device ki live location) ----
+    // Ye simulated buses se alag hai — ye tumhare browser/phone ki asli GPS location use karta hai.
+    let liveMarker = null;
+    let liveAccuracyCircle = null;
+    const gpsStatusEl = document.getElementById("gpsStatus");
+
+    function setGpsStatus(text, color) {
+      if (gpsStatusEl) {
+        gpsStatusEl.textContent = text;
+        gpsStatusEl.style.color = color;
+        gpsStatusEl.style.borderLeft = `4px solid ${color}`;
+      }
+    }
+
+    if ("geolocation" in navigator) {
+      navigator.geolocation.watchPosition(
+        (pos) => {
+          const { latitude, longitude, accuracy } = pos.coords;
+          const latlng = [latitude, longitude];
+
+          if (!liveMarker) {
+            const gpsIcon = L.divIcon({
+              html: `<div style="background:#1B4079; width:18px; height:18px; border-radius:50%; border:3px solid #FFC93C; box-shadow:0 0 0 6px rgba(27,64,121,0.25);"></div>`,
+              className: '',
+              iconSize: [18, 18],
+            });
+            liveMarker = L.marker(latlng, { icon: gpsIcon })
+              .addTo(map)
+              .bindPopup("📍 Your Live GPS Location");
+            liveAccuracyCircle = L.circle(latlng, {
+              radius: accuracy, color: "#1B4079", fillOpacity: 0.08, weight: 1
+            }).addTo(map);
+            map.setView(latlng, 14);
+          } else {
+            liveMarker.setLatLng(latlng);
+            liveAccuracyCircle.setLatLng(latlng);
+            liveAccuracyCircle.setRadius(accuracy);
+          }
+
+          setGpsStatus(`🟢 Live GPS active — accuracy ~${Math.round(accuracy)}m (updates automatically)`, "#2FA679");
+        },
+        (err) => {
+          setGpsStatus("⚠ GPS permission denied ya unavailable — browser mein location allow karo (address bar ke paas lock/location icon).", "#E23E3E");
+        },
+        { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
+      );
+    } else {
+      setGpsStatus("⚠ Is browser mein GPS/geolocation supported nahi hai.", "#E23E3E");
+    }
+  </script>
+</body>
+</html>

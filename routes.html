@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Routes — Transport Safety Console</title>
+<link rel="stylesheet" href="css/style.css" />
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <div id="navbar-container"></div>
+
+  <div class="page">
+    <div class="page-title">Route Management</div>
+    <div class="page-subtitle">Naya route banao ya existing routes dekho</div>
+
+    <div class="grid grid-2">
+      <div class="card">
+        <h3>+ Add New Route</h3>
+        <label>Route Name</label>
+        <input type="text" id="routeName" placeholder="e.g. Route 5 — Aliganj" />
+
+        <label>Assign Driver</label>
+        <select id="routeDriver">
+          <option>Ramesh Yadav</option>
+          <option>Suresh Kumar</option>
+          <option>Vinod Singh</option>
+          <option>Mahesh Gupta</option>
+        </select>
+
+        <label>Pickup Time</label>
+        <input type="text" id="routeTime" placeholder="e.g. 7:15 AM" />
+
+        <button class="btn btn-primary" onclick="addRoute()">Save Route</button>
+      </div>
+
+      <div class="card">
+        <h3>Existing Routes</h3>
+        <table>
+          <thead><tr><th>Route</th><th>Driver</th><th>Time</th></tr></thead>
+          <tbody id="routeTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/script.js"></script>
+  <script>
+    renderNavbar("routes.html");
+
+    let routes = [
+      { name: "Route 1 — Gomti Nagar", driver: "Ramesh Yadav", time: "7:00 AM" },
+      { name: "Route 2 — Hazratganj", driver: "Suresh Kumar", time: "7:10 AM" },
+      { name: "Route 3 — Alambagh", driver: "Vinod Singh", time: "7:20 AM" },
+    ];
+
+    function renderRoutes() {
+      const tbody = document.getElementById("routeTableBody");
+      tbody.innerHTML = "";
+      routes.forEach(r => {
+        const row = document.createElement("tr");
+        row.innerHTML = `<td>${r.name}</td><td>${r.driver}</td><td>${r.time}</td>`;
+        tbody.appendChild(row);
+      });
+    }
+
+    function addRoute() {
+      const name = document.getElementById("routeName").value.trim();
+      const driver = document.getElementById("routeDriver").value;
+      const time = document.getElementById("routeTime").value.trim();
+
+      if (!name || !time) {
+        alert("Route name aur time dono bharo!");
+        return;
+      }
+
+      routes.push({ name, driver, time });
+      renderRoutes();
+
+      // Clear form
+      document.getElementById("routeName").value = "";
+      document.getElementById("routeTime").value = "";
+    }
+
+    renderRoutes();
+  </script>
+</body>
+</html>

@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Dashboard — Transport Safety Console</title>
+<link rel="stylesheet" href="css/style.css" />
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <div id="navbar-container"></div>
+
+  <div class="page">
+    <div class="page-title">Dashboard</div>
+    <div class="page-subtitle">Aaj ka overview — saari buses ek nazar mein</div>
+
+    <div class="grid grid-3" style="margin-bottom:26px;">
+      <div class="card stat-card hoverable">
+        <div class="stat-number" id="totalBuses">-</div>
+        <div class="stat-label">Total Buses</div>
+      </div>
+      <div class="card stat-card hoverable">
+        <div class="stat-number" id="runningBuses" style="color:#2FA679;">-</div>
+        <div class="stat-label">Currently Running</div>
+      </div>
+      <div class="card stat-card hoverable">
+        <div class="stat-number" id="emergencyBuses" style="color:#E23E3E;">-</div>
+        <div class="stat-label">Active Emergencies</div>
+      </div>
+    </div>
+
+    <div class="grid grid-2" style="align-items:start; margin-bottom:10px;">
+      <div>
+        <h3 style="font-family: var(--font-display); margin-bottom:12px;">All Buses</h3>
+
+        <div class="toolbar">
+          <input type="text" id="searchInput" placeholder="🔍 Search by bus no, route or driver..." oninput="applyFilters()" />
+          <select id="statusFilter" onchange="applyFilters()">
+            <option value="all">All Status</option>
+            <option value="running">Running</option>
+            <option value="idle">Idle</option>
+            <option value="emergency">Emergency</option>
+          </select>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Bus No.</th>
+              <th>Route</th>
+              <th>Driver</th>
+              <th>Students</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="busTableBody"></tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <h3>Students per Bus</h3>
+        <div id="chartArea" style="margin-top:14px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/script.js"></script>
+  <script>
+    renderNavbar("dashboard.html");
+
+    document.getElementById("totalBuses").textContent = BUSES.length;
+    document.getElementById("runningBuses").textContent = BUSES.filter(b => b.status === "running").length;
+    document.getElementById("emergencyBuses").textContent = BUSES.filter(b => b.status === "emergency").length;
+
+    function renderTable(list) {
+      const tbody = document.getElementById("busTableBody");
+      tbody.innerHTML = "";
+
+      if (list.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#6B7686; padding:24px;">Koi bus nahi mili. Search/filter change karke try karo.</td></tr>`;
+        return;
+      }
+
+      list.forEach(bus => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td><strong>${bus.id}</strong></td>
+          <td>${bus.route}</td>
+          <td>${bus.driver}</td>
+          <td>${bus.students}</td>
+          <td><span class="badge ${bus.status}">${bus.status}</span></td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    function applyFilters() {
+      const query = document.getElementById("searchInput").value.toLowerCase();
+      const status = document.getElementById("statusFilter").value;
+
+      const filtered = BUSES.filter(bus => {
+        const matchesQuery = bus.id.toLowerCase().includes(query)
+          || bus.route.toLowerCase().includes(query)
+          || bus.driver.toLowerCase().includes(query);
+        const matchesStatus = status === "all" || bus.status === status;
+        return matchesQuery && matchesStatus;
+      });
+
+      renderTable(filtered);
+    }
+
+    // ---- Simple horizontal bar chart: students per bus ----
+    function renderChart() {
+      const chartArea = document.getElementById("chartArea");
+      const maxStudents = Math.max(...BUSES.map(b => b.students));
+
+      BUSES.forEach(bus => {
+        const pct = Math.round((bus.students / maxStudents) * 100);
+        const row = document.createElement("div");
+        row.className = "bar-row";
+        row.innerHTML = `
+          <div class="bar-label">${bus.id}</div>
+          <div class="bar-track"><div class="bar-fill" style="width:0%;" data-target="${pct}"></div></div>
+          <div class="bar-value">${bus.students}</div>
+        `;
+        chartArea.appendChild(row);
+      });
+
+      // Animate bars in after they're added to DOM
+      setTimeout(() => {
+        document.querySelectorAll(".bar-fill").forEach(fill => {
+          fill.style.width = fill.dataset.target + "%";
+        });
+      }, 100);
+    }
+
+    renderTable(BUSES);
+    renderChart();
+  </script>
+</body>
+</html>
